@@ -28,7 +28,7 @@ class MonteCarloTreeSearch:
     ) -> None:
         self.__exploration_const = exploration_const
         self.__simulations = simulations
-        self.__game_strategy = game_strategy
+        self.__game_strategy = game_strategy()
         self.__root_node = GameMoveNode(label="MCTS root")
         self.__max_depth = max_depth
 
