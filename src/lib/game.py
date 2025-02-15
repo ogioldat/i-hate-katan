@@ -10,7 +10,7 @@ class GameMoveNodeScore:
 
 
 class GameMoveNode:
-    def __init__(self, label, parent=None, key=randint(1, 100000)):
+    def __init__(self, label: str, parent=None, key=randint(1, 100000)):
         self.children = GameMoveChildNodes()
         self.__label = label
         self.__parent = parent
@@ -27,11 +27,9 @@ class GameMoveNode:
     def score(self) -> GameMoveNodeScore:
         return self.__score
 
-    def append(self, key, label):
+    def append(self, key: int, label: str):
         new_node = GameMoveNode(label=label, parent=self, key=key)
         self.children[key] = new_node
-
-        return new_node
 
     def is_leaf_node(self) -> bool:
         return len(self.children) == 0
