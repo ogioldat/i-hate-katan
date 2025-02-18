@@ -1,6 +1,8 @@
 from abc import ABC as AbstractBaseClass, abstractmethod
 from dataclasses import dataclass
-from random import randint
+from typing import Generic, TypeVar, Dict, Type
+
+NodeKey = int
 
 
 @dataclass
@@ -9,10 +11,31 @@ class GameMoveNodeScore:
     visits = 0
 
 
+@dataclass
+class GameStateShape:
+    pass
+
+
+TGameStateShape = TypeVar("TGameStateShape", bound=GameStateShape)
+
+
+class GameStateStorage(Generic[TGameStateShape]):
+    def __init__(self, shape: Type[TGameStateShape]):
+        self.__storage: Dict[NodeKey, shape] = dict()
+
+    def set(self, key: NodeKey, value: TGameStateShape) -> None:
+        self.__storage[key] = value
+
+    def get(self, key: NodeKey) -> TGameStateShape:
+        return self.__storage.get(key)
+
+    def has(self, key: NodeKey) -> bool:
+        return key in self.__storage.keys()
+
+
 class GameMoveNode:
-    def __init__(self, label: str, parent=None, key=randint(1, 100000)):
+    def __init__(self, key: int, parent=None):
         self.children = GameMoveChildNodes()
-        self.__label = label
         self.__parent = parent
         self.key = key
         self.__score = GameMoveNodeScore()
@@ -23,16 +46,26 @@ class GameMoveNode:
     def add_wins(self, num=int(0)):
         self.__score.wins += num
 
+    def is_root(self) -> bool:
+        return self.__parent is None
+
     @property
     def score(self) -> GameMoveNodeScore:
         return self.__score
 
-    def append(self, key: int, label: str):
-        new_node = GameMoveNode(label=label, parent=self, key=key)
+    @property
+    def parent(self):
+        return self.__parent
+
+    def append(self, key: int):
+        new_node = GameMoveNode(parent=self, key=key)
         self.children[key] = new_node
 
     def is_leaf_node(self) -> bool:
         return len(self.children) == 0
+
+    def __repr__(self) -> str:
+        return f"key={self.key}"
 
 
 class MissingChildNodeError(Exception):
@@ -67,6 +100,11 @@ class GameResult:
 
 
 class GameStrategy(AbstractBaseClass):
+    storage: GameStateStorage
+
+    def __init__(self):
+        self.__key_seq = 1
+
     @abstractmethod
     def expand_moves(self, node: GameMoveNode) -> None:
         pass
@@ -79,3 +117,12 @@ class GameStrategy(AbstractBaseClass):
     def random_game(self, node: GameMoveNode) -> GameResult:
         if not self.is_terminal_move(node):
             raise NotTerminalNodeError
+
+    def create_state_storage(
+        self, storage_shape: Type[TGameStateShape]
+    ) -> GameStateStorage[TGameStateShape]:
+        return GameStateStorage(shape=storage_shape)
+
+    def next_key(self) -> NodeKey:
+        self.__key_seq += 1
+        return self.__key_seq
