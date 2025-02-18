@@ -1,13 +1,13 @@
 import unittest
-from tictactoe_game_strategy import TicTatToeGameStrategy
+from tests.utils import TicTacToeGameStrategy
 from lib.game import GameMoveNode
 
 
 class TestGameStrategy(unittest.TestCase):
     def test_moves_expansion(self):
-        strategy = TicTatToeGameStrategy()
+        strategy = TicTacToeGameStrategy()
 
-        root_node_key = TicTatToeGameStrategy.initial_state_hash()
+        root_node_key = TicTacToeGameStrategy.initial_state_hash()
         root_node = GameMoveNode(key=root_node_key)
 
         strategy.expand_moves(root_node)
@@ -15,9 +15,9 @@ class TestGameStrategy(unittest.TestCase):
         assert len(root_node.children) == 9
 
     def test_moves_expansion_determinism(self):
-        strategy = TicTatToeGameStrategy()
+        strategy = TicTacToeGameStrategy()
 
-        root_node_key = TicTatToeGameStrategy.initial_state_hash()
+        root_node_key = TicTacToeGameStrategy.initial_state_hash()
         root_node = GameMoveNode(key=root_node_key)
 
         strategy.expand_moves(root_node)

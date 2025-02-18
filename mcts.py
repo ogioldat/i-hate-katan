@@ -1,6 +1,7 @@
 from math import log as ln, sqrt
 from typing import Type
 from lib.game import GameStrategy, GameMoveNode, NotTerminalNodeError
+from debug.tree import pretty_print_tree
 
 
 class MaxExplorationDepthExceededError(Exception):
@@ -29,29 +30,37 @@ class MonteCarloTreeSearch:
         self.__exploration_const = exploration_const
         self.__simulations = simulations
         self.__game_strategy = game_strategy
-        self.__root_node = GameMoveNode(label="MCTS root")
         self.__max_depth = max_depth
 
     def run(self):
-        root = self.__game_strategy.expand_moves(self.__root_node)
+        root_node_key = self.__game_strategy.initial_state_hash()
+        root_node = GameMoveNode(key=root_node_key)
+        # self.__game_strategy.expand_moves(root_node)
+
+        # root = self.__game_strategy.expand_moves(self.__root_node)
 
         for _ in range(self.__simulations):
-            self.__explore_moves(root)
+            self.__explore_moves(root_node)
 
-    def __explore_moves(self, root: GameMoveNode):
-        expanded_node = self.__game_strategy.expand_moves(root)
+        pretty_print_tree(root_node)
+
+    def __explore_moves(self, node: GameMoveNode):
+        self.__game_strategy.expand_moves(node)
         depth = 0
 
-        while not self.__game_strategy.no_moves_left(expanded_node):
-            selected_node = self.__select(expanded_node)
-            expanded_node = self.__game_strategy.expand_moves(selected_node)
+        # print(node)
+        # pretty_print_tree(node)
+
+        while not self.__game_strategy.no_moves_left(node):
+            selected_node = self.__select(node)
+            node = self.__game_strategy.expand_moves(selected_node)
             depth += 1
 
             if depth > self.__max_depth:
                 raise MaxExplorationDepthExceededError(self.__max_depth)
 
-        simulation_result = self.__game_strategy.random_game(expanded_node)
-        self.__backpropagate(simulation_result)
+        # simulation_result = self.__game_strategy.random_game(node)
+        # self.__backpropagate(simulation_result)
 
     def __backpropagate(self, node: GameMoveNode):
         if not node.is_leaf_node():
