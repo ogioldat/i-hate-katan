@@ -13,8 +13,14 @@ from typing import Tuple
 class TicTacToeStateShape(GameStateShape):
     moves: Tuple[int, int, int, int, int, int, int, int, int]
 
+    def __eq__(self, other: GameStateShape) -> bool:
+        return self == other
 
-@dataclass
+    def __hash__(self):
+        return hash(self.moves)
+
+
+@dataclass(frozen=True)
 class Players:
     NONE = 0
     P1 = 1
@@ -33,7 +39,7 @@ the goal is to build decision tree of possible moves the player can make to win 
 
 
 class TicTatToeGameStrategy(GameStrategy):
-    WINNING_MOVES = [
+    __WINNING_MOVES = [
         [0, 1, 2],
         [3, 4, 5],
         [6, 7, 8],
@@ -43,31 +49,36 @@ class TicTatToeGameStrategy(GameStrategy):
         [0, 4, 8],
         [2, 4, 6],
     ]
-    INITIAL_MOVES = (0,) * 9
+    __INITIAL_STATE: TicTacToeStateShape = TicTacToeStateShape(moves=(0,) * 9)
 
     def __init__(self):
-        self.__storage = super().create_state_storage(storage_shape=TicTacToeStateShape)
+        super().__init__()
+        self.__storage = super()._create_state_storage(
+            storage_shape=TicTacToeStateShape
+        )
 
     @staticmethod
-    def move_from_state(state: TicTacToeStateShape, player: Players, move: int):
+    def move_from_state(state: TicTacToeStateShape, player: Players, move_idx: int):
         loose_moves = list(state.moves)
-        loose_moves[move] = player
+        loose_moves[move_idx] = player
 
         return tuple(loose_moves)
 
     def expand_moves(self, node: GameMoveNode) -> None:
         if node.is_root():
-            self.__storage.set(node.key, TicTatToeGameStrategy.INITIAL_MOVES)
-            return
+            self.__storage.set(node.key, TicTatToeGameStrategy.__INITIAL_STATE)
+            expand_from_state = self.__storage.get(node.key)
+        else:
+            expand_from_state = self.__storage.get(node.parent.key)
 
-        parent_state = self.__storage.get(node.parent.key)
+        for move_idx, _ in enumerate(expand_from_state.moves):
+            move = expand_from_state.moves[move_idx]
 
-        for move in parent_state.moves:
             if move == Players.NONE:
                 next_move_state = TicTatToeGameStrategy.move_from_state(
-                    node.state, Players.P1, move
+                    expand_from_state, Players.P1, move_idx
                 )
-                node_key = super().next_key()
+                node_key = TicTatToeGameStrategy.state_hash(next_move_state)
 
                 node.append(key=node_key)
 
@@ -84,12 +95,16 @@ class TicTatToeGameStrategy(GameStrategy):
             raise NotTerminalNodeError
 
     def pretty_print_node(self, node: GameMoveNode):
-        move = self.__storage.get(node.key)
-        print(f"key={node.key}")
+        state = self.__storage.get(node.key).moves
+
         print(f"""
-            {move[0]} | {move[1]} | {move[2]}
+            {state[0]} | {state[1]} | {state[2]}
            ---|---|---
-            {move[3]} | {move[4]} | {move[5]}
+            {state[3]} | {state[4]} | {state[5]}
            ---|---|---
-            {move[6]} | {move[7]} | {move[8]}
+            {state[6]} | {state[7]} | {state[8]}
         """)
+
+    @classmethod
+    def initial_state_hash(cls) -> int:
+        return cls.state_hash(cls.__INITIAL_STATE)

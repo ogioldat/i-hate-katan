@@ -60,7 +60,7 @@ class MonteCarloTreeSearch:
     def __select(self, node: GameMoveNode) -> GameMoveNode:
         max_score = (0, GameMoveNode("empty"))
 
-        for child_node in node.children.values():
+        for child_node in node.__children.values():
             score = self.__selection_policy_score(child_node)
 
             if score > max_score[0]:

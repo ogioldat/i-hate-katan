@@ -12,8 +12,14 @@ class GameMoveNodeScore:
 
 
 @dataclass
-class GameStateShape:
-    pass
+class GameStateShape(AbstractBaseClass):
+    @abstractmethod
+    def __hash__(self):
+        pass
+
+    @abstractmethod
+    def __eq__(self, value: object) -> bool:
+        pass
 
 
 TGameStateShape = TypeVar("TGameStateShape", bound=GameStateShape)
@@ -27,15 +33,24 @@ class GameStateStorage(Generic[TGameStateShape]):
         self.__storage[key] = value
 
     def get(self, key: NodeKey) -> TGameStateShape:
+        if key not in self.__storage:
+            raise MissingStorageEntryError(key)
+
         return self.__storage.get(key)
 
     def has(self, key: NodeKey) -> bool:
         return key in self.__storage.keys()
 
 
+class MissingStorageEntryError(Exception):
+    def __init__(self, key: NodeKey) -> None:
+        self.message = f'Missing "{key}" key!'
+        super().__init__(self.message, key)
+
+
 class GameMoveNode:
-    def __init__(self, key: int, parent=None):
-        self.children = GameMoveChildNodes()
+    def __init__(self, key: NodeKey, parent=None):
+        self.__children: Dict[NodeKey, GameMoveNode] = dict()
         self.__parent = parent
         self.key = key
         self.__score = GameMoveNodeScore()
@@ -57,15 +72,30 @@ class GameMoveNode:
     def parent(self):
         return self.__parent
 
-    def append(self, key: int):
+    def child(self, key: NodeKey):
+        if key not in self.__children:
+            raise MissingChildNodeError(self, key=key)
+
+        return self.__children.get(key)
+
+    @property
+    def children(self):
+        return self.__children
+
+    def append(self, key: NodeKey):
         new_node = GameMoveNode(parent=self, key=key)
-        self.children[key] = new_node
+        self.__children[key] = new_node
+
+        return new_node
 
     def is_leaf_node(self) -> bool:
-        return len(self.children) == 0
+        return len(self.__children) == 0
 
     def __repr__(self) -> str:
         return f"key={self.key}"
+
+    def __str__(self) -> str:
+        return str(self.key)
 
 
 class MissingChildNodeError(Exception):
@@ -80,18 +110,6 @@ class NotTerminalNodeError(Exception):
         super().__init__(self.message, node)
 
 
-class GameMoveChildNodes(dict):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-    @property
-    def __getitem__(self, key):
-        if key in self.__children:
-            return self.__children[key]
-
-        raise MissingChildNodeError(self, key=key)
-
-
 @dataclass
 class GameResult:
     score: int
@@ -101,9 +119,7 @@ class GameResult:
 
 class GameStrategy(AbstractBaseClass):
     storage: GameStateStorage
-
-    def __init__(self):
-        self.__key_seq = 1
+    storage_shape: Type[TGameStateShape]
 
     @abstractmethod
     def expand_moves(self, node: GameMoveNode) -> None:
@@ -118,11 +134,16 @@ class GameStrategy(AbstractBaseClass):
         if not self.is_terminal_move(node):
             raise NotTerminalNodeError
 
-    def create_state_storage(
+    def _create_state_storage(
         self, storage_shape: Type[TGameStateShape]
     ) -> GameStateStorage[TGameStateShape]:
         return GameStateStorage(shape=storage_shape)
 
-    def next_key(self) -> NodeKey:
-        self.__key_seq += 1
-        return self.__key_seq
+    @staticmethod
+    def state_hash(state: Type[TGameStateShape]) -> int:
+        return hash(state)
+
+    @classmethod
+    @abstractmethod
+    def initial_state_hash(cls) -> int:
+        pass
