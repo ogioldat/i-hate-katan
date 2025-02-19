@@ -1,7 +1,7 @@
-from math import log as ln, sqrt
 from typing import Type
 from lib.game import GameStrategy, GameMoveNode, NotTerminalNodeError
 from debug.tree import pretty_print_tree
+from .selection_policy import UCB1SelectionPolicy
 
 
 class MaxExplorationDepthExceededError(Exception):
@@ -23,13 +23,13 @@ class MonteCarloTreeSearch:
     def __init__(
         self,
         game_strategy: Type[GameStrategy],
-        exploration_const=sqrt(2),
+        selection_policy: Type[UCB1SelectionPolicy] = UCB1SelectionPolicy(),
         simulations=int(1000),
         max_depth=int(10000),
     ) -> None:
-        self.__exploration_const = exploration_const
         self.__simulations = simulations
         self.__game_strategy = game_strategy
+        self.__selection_policy = selection_policy
         self.__max_depth = max_depth
 
     def run(self):
@@ -46,7 +46,7 @@ class MonteCarloTreeSearch:
         depth = 0
 
         while True:
-            node = self.__select_move(node)
+            node = self.__selection_policy.select(node)
             if self.__game_strategy.no_moves_left(node):
                 break
 
@@ -59,31 +59,3 @@ class MonteCarloTreeSearch:
     def __backpropagate(self, node: GameMoveNode):
         if not node.is_leaf_node():
             raise NotTerminalNodeError
-
-    def __select_move(self, node: GameMoveNode) -> GameMoveNode:
-        return next(iter(node.children.values()))
-        # max_score = (0, GameMoveNode("empty"))
-
-        # for child_node in node.__children.values():
-        #     score = self.__selection_policy_score(child_node)
-
-        #     if score > max_score[0]:
-        #         max_score = (score, child_node)
-
-        # return max_score[1]
-
-    def __selection_policy_score(self, node: GameMoveNode) -> float:
-        return self.__ucb1_score(node)
-
-    """
-    UCT stands for Upper Confidence Bound for Trees
-    TODO: Explore alternatives UCB1-tuned
-    """
-
-    def __ucb1_score(self, node: GameMoveNode) -> float:
-        reward_visit_ratio = float(node.wins / node.visit)
-        ucb1 = reward_visit_ratio + self.__exploration_const * sqrt(
-            ln(node.parent.visit) / node.visits
-        )
-
-        return ucb1

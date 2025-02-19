@@ -1,6 +1,6 @@
 import unittest
 from tests.utils import TicTacToeGameStrategy
-from simulation.mcts import MonteCarloTreeSearch
+from simulation import MonteCarloTreeSearch, FirstChildNodeSelectionPolicy
 
 
 class TestMCTS(unittest.TestCase):
@@ -8,7 +8,10 @@ class TestMCTS(unittest.TestCase):
         strategy = TicTacToeGameStrategy()
 
         mcts = MonteCarloTreeSearch(
-            game_strategy=strategy, simulations=1, max_depth=100
+            game_strategy=strategy,
+            simulations=1,
+            max_depth=100,
+            selection_policy=FirstChildNodeSelectionPolicy(),
         )
         mcts.run()
 
