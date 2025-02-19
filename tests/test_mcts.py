@@ -1,9 +1,9 @@
 import unittest
 from tests.utils import TicTacToeGameStrategy
-from mcts import MonteCarloTreeSearch
+from simulation.mcts import MonteCarloTreeSearch
 
 
-class TestMCTS(unittest.TestCase):
+class TestMCTS(unittest.TesCase):
     def test_moves_expansion(self):
         strategy = TicTacToeGameStrategy()
 
