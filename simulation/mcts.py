@@ -25,7 +25,7 @@ class MonteCarloTreeSearch:
         game_strategy: Type[GameStrategy],
         exploration_const=sqrt(2),
         simulations=int(1000),
-        max_depth=int(1000000),
+        max_depth=int(10000),
     ) -> None:
         self.__exploration_const = exploration_const
         self.__simulations = simulations
@@ -33,49 +33,44 @@ class MonteCarloTreeSearch:
         self.__max_depth = max_depth
 
     def run(self):
-        root_node_key = self.__game_strategy.initial_state_hash()
-        root_node = GameMoveNode(key=root_node_key)
-        # self.__game_strategy.expand_moves(root_node)
-
-        # root = self.__game_strategy.expand_moves(self.__root_node)
+        root_node = self.__game_strategy.init_root_node()
+        self.__game_strategy.expand_moves(root_node)
+        explored_node = root_node
 
         for _ in range(self.__simulations):
-            self.__explore_moves(root_node)
+            self.__simulate(explored_node)
 
         pretty_print_tree(root_node)
 
-    def __explore_moves(self, node: GameMoveNode):
-        self.__game_strategy.expand_moves(node)
+    def __simulate(self, node: GameMoveNode):
         depth = 0
 
-        # print(node)
-        # pretty_print_tree(node)
+        while True:
+            node = self.__select_move(node)
+            if self.__game_strategy.no_moves_left(node):
+                break
 
-        while not self.__game_strategy.no_moves_left(node):
-            selected_node = self.__select(node)
-            node = self.__game_strategy.expand_moves(selected_node)
+            self.__game_strategy.expand_moves(node)
+
             depth += 1
-
             if depth > self.__max_depth:
                 raise MaxExplorationDepthExceededError(self.__max_depth)
-
-        # simulation_result = self.__game_strategy.random_game(node)
-        # self.__backpropagate(simulation_result)
 
     def __backpropagate(self, node: GameMoveNode):
         if not node.is_leaf_node():
             raise NotTerminalNodeError
 
-    def __select(self, node: GameMoveNode) -> GameMoveNode:
-        max_score = (0, GameMoveNode("empty"))
+    def __select_move(self, node: GameMoveNode) -> GameMoveNode:
+        return next(iter(node.children.values()))
+        # max_score = (0, GameMoveNode("empty"))
 
-        for child_node in node.__children.values():
-            score = self.__selection_policy_score(child_node)
+        # for child_node in node.__children.values():
+        #     score = self.__selection_policy_score(child_node)
 
-            if score > max_score[0]:
-                max_score = (score, child_node)
+        #     if score > max_score[0]:
+        #         max_score = (score, child_node)
 
-        return max_score[1]
+        # return max_score[1]
 
     def __selection_policy_score(self, node: GameMoveNode) -> float:
         return self.__ucb1_score(node)

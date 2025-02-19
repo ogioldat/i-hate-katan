@@ -58,11 +58,13 @@ class TicTacToeGameStrategy(GameStrategy):
         )
 
     @staticmethod
-    def move_from_state(state: TicTacToeStateShape, player: Player, move_idx: int):
+    def move_from_state(
+        state: TicTacToeStateShape, player: Player, move_idx: int
+    ) -> TicTacToeStateShape:
         loose_moves = list(state.moves)
         loose_moves[move_idx] = player
 
-        return tuple(loose_moves)
+        return TicTacToeStateShape(moves=tuple(loose_moves))
 
     def expand_moves(self, node: GameMoveNode) -> None:
         if node.is_root():
@@ -78,10 +80,15 @@ class TicTacToeGameStrategy(GameStrategy):
                 next_move_state = TicTacToeGameStrategy.move_from_state(
                     expand_from_state, Player.P1, move_idx
                 )
-                node_key = TicTacToeGameStrategy.state_hash(next_move_state)
+                node_key = hash(next_move_state)
+
+                if node_key == "4423490485614069943":
+                    pass
+
+                if node.key == node_key:
+                    continue
 
                 node.append(key=node_key)
-
                 self.__storage.set(key=node_key, value=next_move_state)
 
             if move == Player.P1:
@@ -94,14 +101,17 @@ class TicTacToeGameStrategy(GameStrategy):
             [w_idx_0, w_idx_1, w_idx_2] = winning_move
 
             if moves[w_idx_0] and moves[w_idx_1] and moves[w_idx_2]:
-                winner = moves[w_idx_0]
-                print("Found winner: ", winner)
+                print("Found winner: ", node)
+
+                node.add_wins()
 
                 return True
 
         for idx, move in enumerate(moves):
-            if len(moves) == idx + 1 and move is not Player.NONE:
-                print("")
+            if move is Player.NONE:
+                return False
+
+            if len(moves) == idx + 1:
                 return True
 
         return False
@@ -110,8 +120,8 @@ class TicTacToeGameStrategy(GameStrategy):
         if not self.no_moves_left(node):
             raise NotTerminalNodeError
 
-    def pretty_print_node(self, node: GameMoveNode):
-        state = self.__storage.get(node.key).moves
+    def pretty_print_node(self, node_key: int):
+        state = self.__storage.get(node_key).moves
 
         print(f"""
             {state[0]} | {state[1]} | {state[2]}
@@ -121,6 +131,8 @@ class TicTacToeGameStrategy(GameStrategy):
             {state[6]} | {state[7]} | {state[8]}
         """)
 
-    @classmethod
-    def initial_state_hash(cls) -> int:
-        return cls.state_hash(cls.__INITIAL_STATE)
+    def init_root_node(self) -> GameMoveNode:
+        node_key = hash(TicTacToeGameStrategy.__INITIAL_STATE)
+        self.__storage.set(key=node_key, value=TicTacToeGameStrategy.__INITIAL_STATE)
+
+        return GameMoveNode(key=node_key, parent=None)

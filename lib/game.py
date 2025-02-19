@@ -58,7 +58,7 @@ class GameMoveNode:
     def visit(self):
         self.__score.visits += 1
 
-    def add_wins(self, num=int(0)):
+    def add_wins(self, num=int(1)):
         self.__score.wins += num
 
     def is_root(self) -> bool:
@@ -139,11 +139,6 @@ class GameStrategy(AbstractBaseClass):
     ) -> GameStateStorage[TGameStateShape]:
         return GameStateStorage(shape=storage_shape)
 
-    @staticmethod
-    def state_hash(state: Type[TGameStateShape]) -> int:
-        return hash(state)
-
-    @classmethod
     @abstractmethod
-    def initial_state_hash(cls) -> int:
+    def init_root_node() -> GameMoveNode:
         pass

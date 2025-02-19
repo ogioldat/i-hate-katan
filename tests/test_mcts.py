@@ -3,7 +3,7 @@ from tests.utils import TicTacToeGameStrategy
 from simulation.mcts import MonteCarloTreeSearch
 
 
-class TestMCTS(unittest.TesCase):
+class TestMCTS(unittest.TestCase):
     def test_moves_expansion(self):
         strategy = TicTacToeGameStrategy()
 
