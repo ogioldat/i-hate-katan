@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from math import log as ln, sqrt
+import random
 from lib.game import GameMoveNode
 
 
@@ -12,6 +13,12 @@ class SelectionPolicy(ABC):
 class FirstChildNodeSelectionPolicy(SelectionPolicy):
     def select(self, node: GameMoveNode) -> GameMoveNode:
         return next(iter(node.children.values()))
+
+
+# Designed for testing purposes
+class RandomNodeSelectionPolicy(SelectionPolicy):
+    def select(self, node: GameMoveNode) -> GameMoveNode:
+        return random.choice(list(node.children.values()))
 
 
 """

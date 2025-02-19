@@ -5,6 +5,7 @@ from lib.game import (
     GameMoveNode,
     NotTerminalNodeError,
     GameStateShape,
+    ExplorationStatus,
 )
 from typing import Tuple, List
 
@@ -94,30 +95,26 @@ class TicTacToeGameStrategy(GameStrategy):
             if move == Player.P1:
                 pass
 
-    def no_moves_left(self, node: GameMoveNode) -> bool:
+    def exploration_status(self, node: GameMoveNode) -> ExplorationStatus:
         moves = self.__storage.get(node.key).moves
 
         for winning_move in TicTacToeGameStrategy.__WINNING_MOVES:
             [w_idx_0, w_idx_1, w_idx_2] = winning_move
 
             if moves[w_idx_0] and moves[w_idx_1] and moves[w_idx_2]:
-                print("Found winner: ", node)
-
-                node.add_wins()
-
-                return True
+                return ExplorationStatus(no_possible_moves=True, winner_node=node)
 
         for idx, move in enumerate(moves):
             if move is Player.NONE:
-                return False
+                return ExplorationStatus(no_possible_moves=False)
 
             if len(moves) == idx + 1:
-                return True
+                return ExplorationStatus(no_possible_moves=True)
 
-        return False
+        return ExplorationStatus(no_possible_moves=False)
 
     def random_game(self, node: GameMoveNode) -> GameResult:
-        if not self.no_moves_left(node):
+        if not self.exploration_status(node):
             raise NotTerminalNodeError
 
     def pretty_print_node(self, node_key: int):

@@ -1,5 +1,5 @@
 from typing import Type
-from lib.game import GameStrategy, GameMoveNode, NotTerminalNodeError
+from lib.game import GameStrategy, GameMoveNode, ExplorationStatus
 from debug.tree import pretty_print_tree
 from .selection_policy import UCB1SelectionPolicy
 
@@ -35,6 +35,7 @@ class MonteCarloTreeSearch:
     def run(self):
         root_node = self.__game_strategy.init_root_node()
         self.__game_strategy.expand_moves(root_node)
+
         explored_node = root_node
 
         for _ in range(self.__simulations):
@@ -47,7 +48,10 @@ class MonteCarloTreeSearch:
 
         while True:
             node = self.__selection_policy.select(node)
-            if self.__game_strategy.no_moves_left(node):
+            status = self.__game_strategy.exploration_status(node)
+
+            if status.no_possible_moves:
+                self.__backpropagate(node, status)
                 break
 
             self.__game_strategy.expand_moves(node)
@@ -56,6 +60,20 @@ class MonteCarloTreeSearch:
             if depth > self.__max_depth:
                 raise MaxExplorationDepthExceededError(self.__max_depth)
 
-    def __backpropagate(self, node: GameMoveNode):
-        if not node.is_leaf_node():
-            raise NotTerminalNodeError
+    def __backpropagate(self, node: GameMoveNode, status: ExplorationStatus):
+        def populate_stats(node: GameMoveNode, is_winner: bool):
+            node.visit()
+
+            if is_winner:
+                node.add_wins()
+
+            if node.is_root():
+                return
+
+            populate_stats(node.parent, is_winner)
+
+        is_winner = False
+        if status.winner_node is not None:
+            is_winner = True
+
+        populate_stats(node, is_winner)
