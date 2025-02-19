@@ -16,6 +16,8 @@ Monte Carlo Tree Search consists of 4 steps:
 2. Expansion
 3. Simulation
 4. Back-propagation
+
+TODO: Check informed MCTS
 """
 
 
@@ -48,10 +50,10 @@ class MonteCarloTreeSearch:
 
         while True:
             node = self.__selection_policy.select(node)
-            status = self.__game_strategy.exploration_status(node)
+            game_status = self.__game_strategy.exploration_status(node)
 
-            if status.no_possible_moves:
-                self.__backpropagate(node, status)
+            if game_status.no_possible_moves:
+                self.__backpropagate(node, game_status)
                 break
 
             self.__game_strategy.expand_moves(node)
@@ -60,7 +62,7 @@ class MonteCarloTreeSearch:
             if depth > self.__max_depth:
                 raise MaxExplorationDepthExceededError(self.__max_depth)
 
-    def __backpropagate(self, node: GameMoveNode, status: ExplorationStatus):
+    def __backpropagate(self, node: GameMoveNode, game_status: ExplorationStatus):
         def populate_stats(node: GameMoveNode, is_winner: bool):
             node.visit()
 
@@ -73,7 +75,7 @@ class MonteCarloTreeSearch:
             populate_stats(node.parent, is_winner)
 
         is_winner = False
-        if status.winner_node is not None:
+        if game_status.winner_node is not None:
             is_winner = True
 
         populate_stats(node, is_winner)
