@@ -2,7 +2,9 @@
   "cSpell.words": [
     "backpropagate",
     "Catan",
-    "mcts"
+    "mcts",
+    "playout",
+    "playouts"
   ],
   "python.testing.unittestArgs": [
     "-v",
