@@ -41,3 +41,8 @@ Record my decision and reasoning process.
 ### To explore
 
 - DDPG, actor-critic
+
+## 24 Feb 2025
+
+- what is entropy in MCTS?
+- I'm pretty sure I'm gonna need Ballman's equation to model random events
